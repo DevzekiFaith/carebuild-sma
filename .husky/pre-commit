@@ -1,0 +1,16 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Check for missing Lucide React icon imports
+echo "🔍 Checking for missing icon imports..."
+node scripts/check-imports.js
+
+if [ $? -ne 0 ]; then
+  echo "❌ Missing icon imports detected. Please fix them before committing."
+  exit 1
+fi
+
+echo "✅ All icon imports are correct!"
+
+
+

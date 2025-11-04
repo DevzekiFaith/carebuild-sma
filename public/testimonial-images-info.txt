@@ -1,0 +1,22 @@
+# Professional Headshot Images for Testimonials
+
+## Image 1: Professional Woman
+- Description: Professional headshot of a woman in her 30s-40s
+- Attire: Dark navy blue blazer over black top
+- Hair: Dark brown, wavy hair with volume
+- Expression: Confident and approachable with gentle smile
+- Background: Light gray professional background
+- Use: Client testimonial for Dr. Sarah Johnson
+
+## Image 2: Professional Man  
+- Description: Professional headshot of a Black man in late 30s-early 40s
+- Attire: Dark navy blue pinstripe suit jacket, white shirt, dark blue tie with white polka dots
+- Hair: Short, neatly styled dark hair with well-groomed beard and mustache
+- Accessories: Dark-rimmed glasses
+- Expression: Warm smile, looking directly at viewer
+- Background: Medium-dark gray professional background
+- Use: Client testimonial for Michael Chen
+
+These images should be saved as:
+- `/public/testimonial-woman.jpg` (for Dr. Sarah Johnson)
+- `/public/testimonial-man.jpg` (for Michael Chen)
