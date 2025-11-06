@@ -5,6 +5,13 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eozonxkvtuwvfaacqjum.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvem9ueGt2dHV3dmZhYWNxanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDUxNTcsImV4cCI6MjA3NjkyMTE1N30.7aW_lLTZ_TCODOR2qCMWjs_-TvWJE-tw47HP8gksLbU';
 
+// Type for user query result
+interface UserQueryResult {
+  id: string;
+  email: string;
+  phone: string | null;
+}
+
 // Initialize Supabase client
 let supabaseAdmin: ReturnType<typeof createClient>;
 
@@ -55,9 +62,9 @@ export async function POST(request: NextRequest) {
       .from('users')
       .select('id, email, phone')
       .ilike('phone', `%${normalizedPhone}%`)
-      .single();
+      .single() as { data: UserQueryResult | null; error: any };
 
-    if (userError || !user) {
+    if (userError || !user || !user.phone) {
       return jsonResponse(
         { error: 'User not found. Please check your phone number.' },
         404
