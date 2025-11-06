@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, UserCheck, Building2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, UserCheck, Building2, Phone } from 'lucide-react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -17,6 +17,7 @@ interface SignupFormData {
   password: string;
   confirmPassword: string;
   role: 'client' | 'supervisor';
+  phone?: string;
 }
 
 export default function SignupForm() {
@@ -36,7 +37,21 @@ export default function SignupForm() {
   const onSubmit = async (data: SignupFormData) => {
     try {
       const result = await signUp(data.email, data.password, data.name, data.role);
-      if (result.success) {
+      if (result.success && result.user) {
+        // Save phone number if provided
+        if (data.phone && data.phone.trim()) {
+          try {
+            const { supabase } = await import('@/lib/supabase');
+            await supabase
+              .from('users')
+              .update({ phone: data.phone.trim() })
+              .eq('id', result.user.id);
+          } catch (phoneError) {
+            console.error('Error saving phone number:', phoneError);
+            // Continue even if phone save fails
+          }
+        }
+        
         appToasts.signupSuccess(data.name);
         // Redirect to dashboard after successful signup
         setTimeout(() => {
@@ -164,6 +179,33 @@ export default function SignupForm() {
               {errors.email && (
                 <p className="text-sm text-red-600">{errors.email.message}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                Phone Number <span className="text-gray-400 text-xs font-normal">(Optional - for password reset)</span>
+              </label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <input
+                  {...register('phone', {
+                    pattern: {
+                      value: /^[\d\s\-\+\(\)]+$/,
+                      message: 'Invalid phone number format',
+                    },
+                  })}
+                  id="phone"
+                  type="tel"
+                  placeholder="+234 801 234 5678"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              {errors.phone && (
+                <p className="text-sm text-red-600">{errors.phone.message}</p>
+              )}
+              <p className="text-xs text-gray-500">
+                Add your phone number to enable WhatsApp password reset
+              </p>
             </div>
 
             <div className="space-y-2">

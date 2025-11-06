@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { 
   MapPin, 
   Calendar, 
@@ -25,18 +26,39 @@ import {
   ArrowRight,
   Play,
   Pause,
-  RefreshCw
+  RefreshCw,
+  X,
+  Upload,
+  Image as ImageIcon,
+  Share2,
+  Trash2,
+  Download,
+  Copy,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import NavigationButtons from '../NavigationButtons';
 import Image from 'next/image';
+import { showToast } from '@/lib/toast';
 
 export default function AssignedSitesPage() {
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('progress');
   const [viewMode, setViewMode] = useState('grid'); // grid or list
   const [selectedSite, setSelectedSite] = useState(null);
+  const [showQuickPhotoModal, setShowQuickPhotoModal] = useState(false);
+  const [showSiteDetailModal, setShowSiteDetailModal] = useState(false);
+  const [showDropdownMenu, setShowDropdownMenu] = useState<number | null>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   const mockSites = [
     {
@@ -148,6 +170,165 @@ export default function AssignedSitesPage() {
     }
   };
 
+  // Quick Photo handlers
+  const startCamera = async () => {
+    try {
+      setIsCapturing(true);
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Use back camera on mobile
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      showToast.error('Unable to access camera. Please check permissions.');
+      setIsCapturing(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setIsCapturing(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.drawImage(video, 0, 0);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            setPhotoFile(file);
+            setCapturedPhoto(URL.createObjectURL(blob));
+            stopCamera();
+          }
+        }, 'image/jpeg', 0.9);
+      }
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setPhotoFile(file);
+      setCapturedPhoto(URL.createObjectURL(file));
+    } else {
+      showToast.error('Please select a valid image file.');
+    }
+  };
+
+  const handleSavePhoto = async () => {
+    if (!photoFile) return;
+    
+    try {
+      // Here you would upload the photo to your storage (Firebase, Supabase, etc.)
+      // For now, we'll just show a success message
+      showToast.success('Photo captured successfully!');
+      // You can navigate to reports page with the photo or handle it differently
+      // router.push('/reports?photo=' + encodeURIComponent(capturedPhoto));
+      
+      // Close modal and reset
+      setShowQuickPhotoModal(false);
+      setCapturedPhoto(null);
+      setPhotoFile(null);
+    } catch (error) {
+      showToast.error('Failed to save photo. Please try again.');
+    }
+  };
+
+  const handleCloseModal = () => {
+    stopCamera();
+    setShowQuickPhotoModal(false);
+    setCapturedPhoto(null);
+    setPhotoFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      // Don't close if clicking inside the dropdown menu
+      if (target.closest('.dropdown-menu') || target.closest('[data-dropdown-button]')) {
+        return;
+      }
+      if (showDropdownMenu !== null) {
+        setShowDropdownMenu(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [showDropdownMenu]);
+
+  // Handler functions
+  const handleReportClick = (site: any) => {
+    router.push(`/reports?siteId=${site.id}&siteName=${encodeURIComponent(site.name)}`);
+  };
+
+  const handleViewClick = (site: any) => {
+    setSelectedSite(site);
+    setShowSiteDetailModal(true);
+  };
+
+  const handleDropdownToggle = (e: React.MouseEvent, siteId: number) => {
+    e.stopPropagation();
+    setShowDropdownMenu(showDropdownMenu === siteId ? null : siteId);
+  };
+
+  const handleDropdownAction = (action: string, site: any) => {
+    setShowDropdownMenu(null);
+    switch (action) {
+      case 'edit':
+        showToast.info('Edit functionality coming soon');
+        break;
+      case 'share':
+        if (navigator.share) {
+          navigator.share({
+            title: site.name,
+            text: `Check out ${site.name} at ${site.location}`,
+          }).catch(() => {
+            showToast.error('Failed to share');
+          });
+        } else {
+          // Fallback: copy to clipboard
+          navigator.clipboard.writeText(`${site.name} - ${site.location}`);
+          showToast.success('Site information copied to clipboard');
+        }
+        break;
+      case 'delete':
+        showToast.warning('Delete functionality coming soon');
+        break;
+      case 'export':
+        showToast.info('Export functionality coming soon');
+        break;
+      default:
+        break;
+    }
+  };
+
   const filteredSites = mockSites.filter(site => {
     const matchesSearch = site.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          site.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -235,6 +416,7 @@ export default function AssignedSitesPage() {
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(255, 255, 255, 0.3)" }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => router.push('/reports')}
                 className="px-6 py-3 bg-white text-purple-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2"
               >
                 <Plus className="w-5 h-5" />
@@ -243,6 +425,7 @@ export default function AssignedSitesPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                onClick={() => setShowQuickPhotoModal(true)}
                 className="px-6 py-3 border-2 border-white text-white font-semibold rounded-xl hover:bg-white hover:text-purple-600 transition-all duration-300 flex items-center justify-center space-x-2"
               >
                 <Camera className="w-5 h-5" />
@@ -541,6 +724,7 @@ export default function AssignedSitesPage() {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={() => handleReportClick(site)}
                           className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2.5 px-4 rounded-xl text-sm font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
                         >
                           <FileText className="w-4 h-4" />
@@ -549,18 +733,61 @@ export default function AssignedSitesPage() {
                         <motion.button
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          onClick={() => handleViewClick(site)}
                           className="flex-1 border border-gray-300 text-gray-700 py-2.5 px-4 rounded-xl text-sm font-semibold hover:bg-gray-50 transition-all duration-300 flex items-center justify-center space-x-2"
                         >
                           <Eye className="w-4 h-4" />
                           <span>View</span>
                         </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="p-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-300"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </motion.button>
+                        <div className="relative">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={(e) => handleDropdownToggle(e, site.id)}
+                            data-dropdown-button
+                            className="p-2.5 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-300"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </motion.button>
+                          {showDropdownMenu === site.id && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <button
+                                onClick={() => handleDropdownAction('edit', site)}
+                                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2 text-sm text-gray-700 transition-colors"
+                              >
+                                <Edit className="w-4 h-4" />
+                                <span>Edit Site</span>
+                              </button>
+                              <button
+                                onClick={() => handleDropdownAction('share', site)}
+                                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2 text-sm text-gray-700 transition-colors"
+                              >
+                                <Share2 className="w-4 h-4" />
+                                <span>Share</span>
+                              </button>
+                              <button
+                                onClick={() => handleDropdownAction('export', site)}
+                                className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2 text-sm text-gray-700 transition-colors"
+                              >
+                                <Download className="w-4 h-4" />
+                                <span>Export</span>
+                              </button>
+                              <button
+                                onClick={() => handleDropdownAction('delete', site)}
+                                className="w-full text-left px-4 py-3 hover:bg-red-50 flex items-center space-x-2 text-sm text-red-600 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                <span>Delete</span>
+                              </button>
+                            </motion.div>
+                          )}
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
@@ -652,6 +879,7 @@ export default function AssignedSitesPage() {
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
+                            onClick={() => handleReportClick(site)}
                             className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg transition-all duration-300"
                           >
                             Report
@@ -659,10 +887,60 @@ export default function AssignedSitesPage() {
                           <motion.button
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
+                            onClick={() => handleViewClick(site)}
                             className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all duration-300"
                           >
                             View
                           </motion.button>
+                          <div className="relative">
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={(e) => handleDropdownToggle(e, site.id)}
+                              data-dropdown-button
+                              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-all duration-300"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </motion.button>
+                            {showDropdownMenu === site.id && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 z-50 overflow-hidden"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  onClick={() => handleDropdownAction('edit', site)}
+                                  className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2 text-sm text-gray-700 transition-colors"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                  <span>Edit Site</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDropdownAction('share', site)}
+                                  className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2 text-sm text-gray-700 transition-colors"
+                                >
+                                  <Share2 className="w-4 h-4" />
+                                  <span>Share</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDropdownAction('export', site)}
+                                  className="w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center space-x-2 text-sm text-gray-700 transition-colors"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  <span>Export</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDropdownAction('delete', site)}
+                                  className="w-full text-left px-4 py-3 hover:bg-red-50 flex items-center space-x-2 text-sm text-red-600 transition-colors"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                  <span>Delete</span>
+                                </button>
+                              </motion.div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -695,6 +973,375 @@ export default function AssignedSitesPage() {
           </motion.button>
         </motion.div>
       )}
+
+      {/* Quick Photo Modal */}
+      <AnimatePresence>
+        {showQuickPhotoModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            onClick={handleCloseModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="p-6 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-purple-600 to-indigo-600">
+                <div>
+                  <h3 className="text-2xl font-bold text-white">Quick Photo</h3>
+                  <p className="text-white/90 text-sm mt-1">Capture or upload a photo quickly</p>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleCloseModal}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-white" />
+                </motion.button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6">
+                {!capturedPhoto ? (
+                  <div className="space-y-6">
+                    {/* Camera View */}
+                    <div className="relative">
+                      <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
+                        {stream && videoRef.current ? (
+                          <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-center">
+                            <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                            <p className="text-gray-600">Camera preview will appear here</p>
+                          </div>
+                        )}
+                      </div>
+                      <canvas ref={canvasRef} className="hidden" />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      {!isCapturing ? (
+                        <>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={startCamera}
+                            className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                          >
+                            <Camera className="w-5 h-5" />
+                            <span>Start Camera</span>
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex-1 border-2 border-purple-600 text-purple-600 py-3 px-6 rounded-xl font-semibold hover:bg-purple-50 transition-all duration-300 flex items-center justify-center space-x-2"
+                          >
+                            <Upload className="w-5 h-5" />
+                            <span>Upload Photo</span>
+                          </motion.button>
+                        </>
+                      ) : (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={capturePhoto}
+                          className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                        >
+                          <Camera className="w-5 h-5" />
+                          <span>Capture Photo</span>
+                        </motion.button>
+                      )}
+                    </div>
+
+                    {/* File Input (Hidden) */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Captured Photo Preview */}
+                    <div className="relative">
+                      <div className="aspect-video bg-gray-100 rounded-xl overflow-hidden">
+                        <img
+                          src={capturedPhoto}
+                          alt="Captured photo"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          setCapturedPhoto(null);
+                          setPhotoFile(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                        className="flex-1 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-300 flex items-center justify-center space-x-2"
+                      >
+                        <X className="w-5 h-5" />
+                        <span>Retake</span>
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleSavePhoto}
+                        className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                      >
+                        <ImageIcon className="w-5 h-5" />
+                        <span>Save Photo</span>
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => {
+                          handleSavePhoto();
+                          router.push('/reports');
+                        }}
+                        className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                      >
+                        <FileText className="w-5 h-5" />
+                        <span>Use in Report</span>
+                      </motion.button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Site Detail Modal */}
+      <AnimatePresence>
+        {showSiteDetailModal && selectedSite && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto"
+            onClick={() => setShowSiteDetailModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto my-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-600 to-indigo-600">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{selectedSite.name}</h3>
+                    <p className="text-white/90 text-sm mt-1 flex items-center space-x-2">
+                      <MapPin className="w-4 h-4" />
+                      <span>{selectedSite.location}</span>
+                    </p>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setShowSiteDetailModal(false)}
+                    className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  >
+                    <X className="w-6 h-6 text-white" />
+                  </motion.button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Site Image */}
+                <div className="relative h-64 rounded-xl overflow-hidden">
+                  <Image
+                    src={selectedSite.image}
+                    alt={selectedSite.name}
+                    fill
+                    className="object-cover"
+                  />
+                  <div className="absolute top-4 left-4 flex space-x-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(selectedSite.status)}`}>
+                      {selectedSite.status}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityColor(selectedSite.priority)}`}>
+                      {selectedSite.priority} priority
+                    </span>
+                  </div>
+                </div>
+
+                {/* Site Information Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Basic Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Client</label>
+                        <p className="text-gray-900">{selectedSite.client}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Location</label>
+                        <p className="text-gray-900 flex items-center space-x-2">
+                          <MapPin className="w-4 h-4" />
+                          <span>{selectedSite.location}</span>
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Progress</label>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <div className="flex-1 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-gradient-to-r from-purple-500 to-indigo-500 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${selectedSite.progress}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-semibold text-gray-900">{selectedSite.progress}%</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Project Details</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Budget</label>
+                        <p className="text-gray-900 font-semibold">₦{(selectedSite.budget / 1000000).toFixed(1)}M</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Spent</label>
+                        <p className="text-gray-900 font-semibold text-purple-600">₦{(selectedSite.spent / 1000000).toFixed(1)}M</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Completion Date</label>
+                        <p className="text-gray-900 flex items-center space-x-2">
+                          <Calendar className="w-4 h-4" />
+                          <span>{selectedSite.completionDate}</span>
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Team Members</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedSite.team.map((member: string, index: number) => (
+                          <div key={index} className="flex items-center space-x-2 px-3 py-2 bg-gray-50 rounded-lg">
+                            <Users className="w-4 h-4 text-gray-600" />
+                            <span className="text-sm text-gray-900">{member}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Statistics</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Reports</span>
+                        <span className="text-sm font-semibold text-gray-900">{selectedSite.reports}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Issues</span>
+                        <span className={`text-sm font-semibold ${selectedSite.issues > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {selectedSite.issues}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Last Visit</span>
+                        <span className="text-sm font-semibold text-gray-900 flex items-center space-x-2">
+                          <Clock className="w-4 h-4" />
+                          <span>{selectedSite.lastVisit}</span>
+                        </span>
+                      </div>
+                      {selectedSite.nextVisit && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Next Visit</span>
+                          <span className="text-sm font-semibold text-gray-900 flex items-center space-x-2">
+                            <Calendar className="w-4 h-4" />
+                            <span>{selectedSite.nextVisit}</span>
+                          </span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-4 pt-4 border-t border-gray-200">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      handleReportClick(selectedSite);
+                      setShowSiteDetailModal(false);
+                    }}
+                    className="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 flex items-center justify-center space-x-2"
+                  >
+                    <FileText className="w-5 h-5" />
+                    <span>Create Report</span>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (navigator.share) {
+                        navigator.share({
+                          title: selectedSite.name,
+                          text: `Check out ${selectedSite.name} at ${selectedSite.location}`,
+                        }).catch(() => {
+                          showToast.error('Failed to share');
+                        });
+                      } else {
+                        navigator.clipboard.writeText(`${selectedSite.name} - ${selectedSite.location}`);
+                        showToast.success('Site information copied to clipboard');
+                      }
+                    }}
+                    className="flex-1 border-2 border-purple-600 text-purple-600 py-3 px-6 rounded-xl font-semibold hover:bg-purple-50 transition-all duration-300 flex items-center justify-center space-x-2"
+                  >
+                    <Share2 className="w-5 h-5" />
+                    <span>Share</span>
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

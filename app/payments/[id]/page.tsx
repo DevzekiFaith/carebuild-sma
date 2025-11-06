@@ -248,7 +248,7 @@ export default function PaymentDetailPage() {
                     <span>Method: {payment.method}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 ${getStatusColor(payment.status)}`}>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center space-x-1 ${getStatusColor(payment.status)}`}>
                       {getStatusIcon(payment.status)}
                       <span className="capitalize">{payment.status}</span>
                     </span>

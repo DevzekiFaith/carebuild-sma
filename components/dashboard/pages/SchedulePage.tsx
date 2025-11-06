@@ -597,15 +597,15 @@ export default function SchedulePage() {
                   <div className="flex items-center gap-4 mb-6">
                     <div className="p-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl shadow-2xl">
                       <Calendar className="w-8 h-8 text-white" />
-                    </div>
-                    <div>
+                  </div>
+        <div>
                       <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
                         Visit Schedule
                       </h1>
                       <div className="h-1 w-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mt-2"></div>
-                    </div>
                   </div>
-                  
+                  </div>
+                
                   <p className="text-xl text-white/80 mb-8 max-w-2xl leading-relaxed">
                     Streamline your construction site management with intelligent scheduling and real-time tracking.
                   </p>
@@ -616,7 +616,7 @@ export default function SchedulePage() {
                       <div className="flex items-center gap-3">
                         <div className="p-2 bg-blue-500/20 rounded-xl">
                           <Calendar className="w-6 h-6 text-blue-300" />
-                        </div>
+            </div>
                         <div>
                           <div className="text-2xl font-bold text-white">{schedule.length}</div>
                           <div className="text-sm text-white/70">Total Visits</div>
@@ -647,9 +647,9 @@ export default function SchedulePage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+          </div>
                 </motion.div>
-              </div>
+        </div>
         
               <motion.div
                 initial={{ opacity: 0, x: 30 }}
@@ -657,9 +657,9 @@ export default function SchedulePage() {
                 transition={{ delay: 0.6, duration: 0.8 }}
                 className="flex flex-col gap-4"
               >
-                <motion.button
+          <motion.button
                   whileHover={{ scale: 1.05, y: -3 }}
-                  whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.95 }}
                   onClick={() => setShowAddModal(true)}
                   className="group relative px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold rounded-2xl shadow-2xl hover:shadow-purple-500/25 transition-all duration-300 overflow-hidden"
                 >
@@ -681,7 +681,7 @@ export default function SchedulePage() {
                     <Filter className="w-6 h-6" />
                     <span className="text-lg">Filters</span>
                   </div>
-                </motion.button>
+          </motion.button>
               </motion.div>
             </div>
           </motion.div>
@@ -888,15 +888,15 @@ export default function SchedulePage() {
               {/* Enhanced Search Bar */}
               <div className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-300"></div>
-                <div className="relative">
+              <div className="relative">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 group-hover:text-purple-500 transition-colors duration-300" />
-                  <input
-                    type="text"
-                    placeholder="Search visits, clients, or locations..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                <input
+                  type="text"
+                  placeholder="Search visits, clients, or locations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-12 pr-4 py-4 border-2 border-gray-200/50 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500 bg-white/80 backdrop-blur-sm text-gray-900 placeholder-gray-500 text-base font-medium transition-all duration-300"
-                  />
+                />
                 </div>
               </div>
 
@@ -909,10 +909,10 @@ export default function SchedulePage() {
                     { key: 'upcoming', label: 'Upcoming', icon: Clock, color: 'from-orange-500 to-red-500' },
                     { key: 'all', label: 'All Visits', icon: BarChart3, color: 'from-purple-500 to-pink-500' }
                   ].map(({ key, label, icon: Icon, color }) => (
-                    <motion.button
+                <motion.button
                       key={key}
                       whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
+                  whileTap={{ scale: 0.95 }}
                       onClick={() => setActiveTab(key as any)}
                       className={`flex items-center space-x-2 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 whitespace-nowrap ${
                         activeTab === key
@@ -922,7 +922,7 @@ export default function SchedulePage() {
                     >
                       <Icon className="w-4 h-4" />
                       <span>{label}</span>
-                    </motion.button>
+                </motion.button>
                   ))}
                 </div>
 
@@ -969,7 +969,7 @@ export default function SchedulePage() {
                   }`}></div>
                   <div className="relative flex items-center space-x-2">
                     <Filter className="w-5 h-5" />
-                    <span>Filters</span>
+                  <span>Filters</span>
                     {showFilters && <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>}
                   </div>
                 </motion.button>
@@ -1478,42 +1478,42 @@ export default function SchedulePage() {
                             <div className="flex items-start justify-between mb-4 sm:mb-6">
                               <div className="flex-1 min-w-0 pr-3 sm:pr-4">
                                 <h3 className="text-base sm:text-lg font-bold text-gray-900 group-hover:text-[#4B0082] transition-colors duration-300 mb-2 leading-tight">
-                                  {item.project_name}
-                                </h3>
+                                {item.project_name}
+                              </h3>
                                 <p className="text-sm text-gray-600 font-medium">{item.client_name}</p>
-                              </div>
-                              <div className="flex-shrink-0">
-                                <motion.div
+                            </div>
+                            <div className="flex-shrink-0">
+                              <motion.div
                                   whileHover={{ rotate: 5, scale: 1.05 }}
                                   className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold ${getStatusColor(item.status)} shadow-lg`}
-                                >
+                              >
                                   <div className="flex items-center">
-                                    {getStatusIcon(item.status)}
+                                  {getStatusIcon(item.status)}
                                     <span className="ml-1 sm:ml-2 capitalize">{item.status}</span>
                                   </div>
-                                </motion.div>
-                              </div>
-                            </div>
-
-                            {/* Priority and Type - Mobile Optimized */}
-                            <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8">
-                              <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold border shadow-sm ${getPriorityColor(item.priority)}`}
-                              >
-                                <div className="flex items-center">
-                                  {getPriorityIcon(item.priority)}
-                                  <span className="ml-1 sm:ml-2 capitalize">{item.priority}</span>
-                                </div>
-                              </motion.div>
-                              <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold shadow-sm ${getTypeColor(item.visit_type)}`}
-                              >
-                                <span className="capitalize">{item.visit_type.replace('-', ' ')}</span>
                               </motion.div>
                             </div>
                           </div>
+
+                            {/* Priority and Type - Mobile Optimized */}
+                            <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-8">
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold border shadow-sm ${getPriorityColor(item.priority)}`}
+                            >
+                                <div className="flex items-center">
+                              {getPriorityIcon(item.priority)}
+                                  <span className="ml-1 sm:ml-2 capitalize">{item.priority}</span>
+                                </div>
+                            </motion.div>
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                                className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold shadow-sm ${getTypeColor(item.visit_type)}`}
+                            >
+                                <span className="capitalize">{item.visit_type.replace('-', ' ')}</span>
+                            </motion.div>
+                            </div>
+                              </div>
 
                           {/* Details Section - Redesigned with Better Spacing */}
                           <div className="relative z-10 space-y-4 sm:space-y-6 mb-6 sm:mb-8">
@@ -1522,11 +1522,11 @@ export default function SchedulePage() {
                               <div className="flex items-center mb-3 sm:mb-4">
                                 <div className="p-2 sm:p-3 bg-blue-100 rounded-lg sm:rounded-xl mr-3 sm:mr-4">
                                   <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600" />
-                                </div>
-                                <div>
+                            </div>
+                              <div>
                                   <h4 className="text-sm sm:text-base font-semibold text-gray-900">Visit Time</h4>
                                   <p className="text-xs text-gray-600">Schedule details</p>
-                                </div>
+                          </div>
                               </div>
                               <div className="ml-12 sm:ml-16">
                                 <div className="text-base sm:text-lg font-bold text-gray-900 mb-1">{item.visit_time}</div>
@@ -1539,11 +1539,11 @@ export default function SchedulePage() {
                               <div className="flex items-center mb-3 sm:mb-4">
                                 <div className="p-2 sm:p-3 bg-green-100 rounded-lg sm:rounded-xl mr-3 sm:mr-4">
                                   <Calendar className="w-4 h-4 sm:w-6 sm:h-6 text-green-600" />
-                                </div>
-                                <div>
+                            </div>
+                              <div>
                                   <h4 className="text-sm sm:text-base font-semibold text-gray-900">Visit Date</h4>
                                   <p className="text-xs text-gray-600">Scheduled date</p>
-                                </div>
+                            </div>
                               </div>
                               <div className="ml-12 sm:ml-16">
                                 <div className="text-base sm:text-lg font-bold text-gray-900 mb-1">{new Date(item.visit_date).toLocaleDateString()}</div>
@@ -1556,11 +1556,11 @@ export default function SchedulePage() {
                               <div className="flex items-start mb-3 sm:mb-4">
                                 <div className="p-2 sm:p-3 bg-purple-100 rounded-lg sm:rounded-xl mr-3 sm:mr-4 mt-1">
                                   <MapPin className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600" />
-                                </div>
+                            </div>
                                 <div>
                                   <h4 className="text-sm sm:text-base font-semibold text-gray-900">Location</h4>
                                   <p className="text-xs text-gray-600">Site address</p>
-                                </div>
+                              </div>
                               </div>
                               <div className="ml-12 sm:ml-16">
                                 <div className="text-sm sm:text-lg font-semibold text-gray-900 mb-2">{item.location}</div>
@@ -1578,7 +1578,7 @@ export default function SchedulePage() {
                               <div className="flex items-start mb-4">
                                 <div className="p-3 bg-amber-100 rounded-xl mr-4 mt-1">
                                   <FileText className="w-6 h-6 text-amber-600" />
-                                </div>
+                            </div>
                                 <div>
                                   <h4 className="text-base font-semibold text-amber-900">Notes</h4>
                                   <p className="text-xs text-amber-700">Additional information</p>
@@ -1643,9 +1643,9 @@ export default function SchedulePage() {
                           {/* Floating Action Indicator */}
                           <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <div className="w-3 h-3 bg-[#4B0082] rounded-full animate-pulse"></div>
-                          </div>
-                        </motion.div>
-                      ))}
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
                   ) : (
                     /* Empty State */
