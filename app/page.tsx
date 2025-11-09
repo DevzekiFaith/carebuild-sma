@@ -168,9 +168,10 @@ export default function Home() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => router.push('/auth/login')}
-                      className="px-4 xl:px-6 py-2 xl:py-2.5 text-gray-700 font-medium hover:text-[#4B0082] transition-colors text-sm xl:text-base"
+                      className="px-6 xl:px-8 py-2 xl:py-2.5 bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-md border border-gray-200/50 text-[#4B0082] font-semibold rounded-full shadow-lg hover:shadow-xl hover:from-white/90 hover:to-white/70 transition-all duration-300 flex items-center space-x-2 text-sm xl:text-base"
                     >
-                      Get Started
+                      <span>Get Started</span>
+                      <ArrowRight className="w-3 h-3 xl:w-4 xl:h-4" />
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.05 }}
@@ -200,7 +201,7 @@ export default function Home() {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => router.push('/pricing')}
-                      className="px-6 xl:px-8 py-2 xl:py-2.5 bg-[#4B0082] text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 text-sm xl:text-base"
+                      className="px-6 xl:px-8 py-2 xl:py-2.5 bg-gradient-to-r from-white/80 to-white/60 backdrop-blur-md border border-gray-200/50 text-[#4B0082] font-semibold rounded-full shadow-lg hover:shadow-xl hover:from-white/90 hover:to-white/70 transition-all duration-300 flex items-center space-x-2 text-sm xl:text-base"
                     >
                       <span>Get Started</span>
                       <ArrowRight className="w-3 h-3 xl:w-4 xl:h-4" />
