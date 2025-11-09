@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Get environment variables with fallbacks (same as lib/supabase.ts)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eozonxkvtuwvfaacqjum.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvem9ueGt2dHV3dmZhYWNxanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDUxNTcsImV4cCI6MjA3NjkyMTE1N30.7aW_lLTZ_TCODOR2qCMWjs_-TvWJE-tw47HP8gksLbU';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { deletePasswordResetOTP } from '@/lib/supabase-helpers';
 
 // Type for user query result
 interface UserQueryResult {
   id: string;
   email: string;
-}
-
-// Initialize Supabase client
-let supabaseAdmin: ReturnType<typeof createClient>;
-
-try {
-  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-} catch (error) {
-  console.error('Failed to initialize Supabase client:', error);
-  throw error;
 }
 
 export async function POST(request: NextRequest) {
@@ -124,11 +111,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Clean up used OTPs (optional)
-    await supabaseAdmin
-      .from('password_reset_otps')
-      .delete()
-      .eq('user_id', user.id)
-      .eq('verified', true);
+    await deletePasswordResetOTP({
+      user_id: user.id,
+      verified: true
+    });
 
     return jsonResponse({
       success: true,

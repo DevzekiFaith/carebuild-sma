@@ -106,3 +106,25 @@ export interface Notification {
   read: boolean;
   createdAt: Date;
 }
+
+export interface PasswordResetOTP {
+  id: string;
+  user_id: string;
+  phone: string;
+  otp_code: string;
+  expires_at: string;
+  verified: boolean;
+  created_at: string;
+}
+
+export interface PasswordResetOTPInsert {
+  user_id: string;
+  phone: string;
+  otp_code: string;
+  expires_at: string;
+  verified?: boolean;
+}
+
+export interface PasswordResetOTPUpdate {
+  verified?: boolean;
+}

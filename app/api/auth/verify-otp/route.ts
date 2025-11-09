@@ -1,25 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Get environment variables with fallbacks (same as lib/supabase.ts)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://eozonxkvtuwvfaacqjum.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvem9ueGt2dHV3dmZhYWNxanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEzNDUxNTcsImV4cCI6MjA3NjkyMTE1N30.7aW_lLTZ_TCODOR2qCMWjs_-TvWJE-tw47HP8gksLbU';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { selectPasswordResetOTP, updatePasswordResetOTP } from '@/lib/supabase-helpers';
+import type { PasswordResetOTP, PasswordResetOTPUpdate } from '@/types';
 
 // Type for user query result
 interface UserQueryResult {
   id: string;
   email: string;
   phone: string | null;
-}
-
-// Initialize Supabase client
-let supabaseAdmin: ReturnType<typeof createClient>;
-
-try {
-  supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-} catch (error) {
-  console.error('Failed to initialize Supabase client:', error);
-  throw error;
 }
 
 export async function POST(request: NextRequest) {
@@ -73,16 +61,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify OTP from database
-    const { data: otpRecord, error: otpError } = await supabaseAdmin
-      .from('password_reset_otps')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('otp_code', otp)
-      .eq('verified', false)
-      .gte('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
+    const { data: otpRecords, error: otpError } = await selectPasswordResetOTP({
+      user_id: user.id,
+      otp_code: otp,
+      verified: false,
+      expires_at: new Date().toISOString(),
+      orderBy: 'created_at',
+      ascending: false,
+      limit: 1
+    });
+
+    const otpRecord = otpRecords?.data?.[0] as PasswordResetOTP | null;
 
     // If table doesn't exist, verify OTP from request (less secure fallback)
     if (otpError && otpError.message.includes('does not exist')) {
@@ -113,10 +102,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Mark OTP as verified
-    await supabaseAdmin
-      .from('password_reset_otps')
-      .update({ verified: true })
-      .eq('id', otpRecord.id);
+    const updateData: PasswordResetOTPUpdate = { verified: true };
+    await updatePasswordResetOTP(otpRecord.id, updateData);
 
     // Generate reset token
     const resetToken = Buffer.from(`${user.id}:${Date.now()}:${Math.random()}`).toString('base64');
