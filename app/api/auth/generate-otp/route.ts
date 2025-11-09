@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
         otp_code: otp,
         expires_at: expiresAt.toISOString(),
         verified: false
-      });
+      } as any);
 
     // If table doesn't exist, handle gracefully
     if (otpError && otpError.message.includes('does not exist')) {
